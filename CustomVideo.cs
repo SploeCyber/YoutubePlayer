@@ -4,45 +4,16 @@ using BrokeProtocol.Entities;
 using BrokeProtocol.Required;
 using BrokeProtocol.Utility;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Web;
 using UnityEngine.UI;
 
 namespace YoutubePlayer.CustomVideo
 {
-    public class HackingContainer
-    {
-        public ShPlayer player;
-        public ShApartment targetApartment;
-        public ShPlayer targetPlayer;
-
-        public HackingContainer(ShPlayer player, int apartmentID, string username)
-        {
-            this.player = player;
-            targetApartment = EntityCollections.FindByID<ShApartment>(apartmentID);
-            EntityCollections.TryGetPlayerByNameOrID(username, out targetPlayer);
-        }
-        public ApartmentPlace ApartmentPlace => targetPlayer.ownedApartments.TryGetValue(targetApartment, out var apartmentPlace) ? apartmentPlace : null;
-
-        public bool IsValid => player && targetApartment && targetPlayer && player.IsMobile && player.InActionRange(targetApartment) && ApartmentPlace != null;
-
-        public bool HackingActive => player.svPlayer.hackingGame != null;
-    }
     public class Player
     {
-        private const float securityCutoff = 0.99f;
-        public ShPlayer player;
-        public ShApartment targetApartment;
-        public ShPlayer targetPlayer;
         private const string youtubePanel = "youtubePanel";
         private const string trendingPanel = "trendingPanel";
-        private const string securityPanel = "securityPanel";
-        private const string enterPasscode = "enterPasscode";
-        private const string setPasscode = "setPasscode";
-        private const string clearPasscode = "clearPasscode";
-        private const string upgradeSecurity = "upgradeSecurity";
-        private const string hackPanel = "hackPanel";
         private const string videoPanel = "videoPanel";
         private const string customVideo = "customVideo";
         private const string stopVideo = "stopVideo";
@@ -53,6 +24,7 @@ namespace YoutubePlayer.CustomVideo
         private const string Movie = "Movie";
         private const string Music = "Music";
         private const string Gaming = "Gaming";
+
         private bool VideoPermission(ShPlayer player, ShEntity videoPlayer, PermEnum permission)
         {
             return videoPlayer && player.InActionRange(videoPlayer) && (player.InOwnApartment || player.svPlayer.HasPermissionBP(permission));
@@ -62,12 +34,10 @@ namespace YoutubePlayer.CustomVideo
         public void OnVideoPanel(ShPlayer player, ShEntity videoEntity)
         {
             List<LabelID> options = new List<LabelID>();
-
             if (player.svPlayer.HasPermission("yp.main"))
             {
                 options.Add(new LabelID("&cYouTube", youtubePanel));
             }
-
             if (VideoPermission(player, videoEntity, PermEnum.VideoDefault))
             {
                 int index = 0;
@@ -77,89 +47,23 @@ namespace YoutubePlayer.CustomVideo
                     index++;
                 }
             }
-
             if (VideoPermission(player, videoEntity, PermEnum.VideoCustom))
             {
                 options.Add(new LabelID("&eCustom Video URL", customVideo));
             }
-
             if (VideoPermission(player, videoEntity, PermEnum.VideoStop))
             {
                 options.Add(new LabelID("&4Stop Video", stopVideo));
             }
-
             string title = "&7Video Panel";
             player.svPlayer.SendOptionMenu(title, videoEntity.ID, videoPanel, options.ToArray(), new LabelID[] { new LabelID("Select", string.Empty) });
         }
 
-
-        private int SecurityUpgradeCost(float currentLevel) => (int)(15000f * currentLevel * currentLevel + 200f);
-
         [Target(GameSourceEvent.PlayerOptionAction, ExecutionMode.Test)]
-        public void OnOptionAction(ShPlayer player, int targetID, string menuID, string optionID, string actionID)
+        public bool OnOptionAction(ShPlayer player, int targetID, string menuID, string optionID, string actionID)
         {
             switch (menuID)
             {
-                case securityPanel:
-                    var apartment = EntityCollections.FindByID<ShApartment>(targetID);
-
-                    if (!apartment) return;
-
-                    switch (optionID)
-                    {
-                        case enterPasscode:
-                            player.svPlayer.SendInputMenu("Enter Passcode", targetID, enterPasscode, InputField.ContentType.Password);
-                            break;
-                        case setPasscode:
-                            player.svPlayer.SendInputMenu("Set Passcode", targetID, setPasscode, InputField.ContentType.Password);
-                            break;
-                        case clearPasscode:
-                            if (player.ownedApartments.TryGetValue(apartment, out var apartmentPlace))
-                            {
-                                apartmentPlace.svPasscode = null;
-                                player.svPlayer.SendGameMessage("Apartment Passcode Cleared");
-                            }
-                            else player.svPlayer.SendGameMessage("No Apartment Owned");
-                            break;
-                        case upgradeSecurity:
-                            if (player.ownedApartments.TryGetValue(apartment, out var securityPlace) && securityPlace.svSecurity < securityCutoff)
-                            {
-                                int upgradeCost = SecurityUpgradeCost(securityPlace.svSecurity);
-
-                                if (player.MyMoneyCount >= upgradeCost)
-                                {
-                                    player.TransferMoney(DeltaInv.RemoveFromMe, upgradeCost);
-                                    securityPlace.svSecurity += 0.1f;
-                                    player.svPlayer.SendGameMessage("Apartment Security Upgraded");
-                                    player.svPlayer.SvSecurityPanel(apartment.ID);
-                                }
-                                else
-                                {
-                                    player.svPlayer.SendGameMessage("Insufficient funds");
-                                }
-                            }
-                            else player.svPlayer.SendGameMessage("Unable");
-                            break;
-                        case hackPanel:
-                            var options = new List<LabelID>();
-                            foreach (var clone in apartment.svApartment.clones.Values)
-                            {
-                                options.Add(new LabelID($"{clone.svOwner.username} - Difficulty: {clone.svSecurity.ToPercent()}", clone.svOwner.username));
-                            }
-                            player.svPlayer.SendOptionMenu("&7Places", targetID, hackPanel, options.ToArray(), new LabelID[] { new LabelID("Hack", string.Empty) });
-                            break;
-                    }
-                    break;
-
-                case hackPanel:
-                    var hackingContainer = new HackingContainer(player, targetID, optionID);
-                    if (hackingContainer.IsValid)
-                    {
-                        player.svPlayer.StartHackingMenu("Hack Security Panel", targetID, menuID, optionID, hackingContainer.ApartmentPlace.svSecurity);
-                        player.StartCoroutine(CheckValidHackingGame(hackingContainer));
-                    }
-                    break;
-
                 case videoPanel:
                     ShEntity videoEntity = EntityCollections.FindByID(targetID);
                     if (optionID == customVideo && VideoPermission(player, videoEntity, PermEnum.VideoCustom))
@@ -177,7 +81,7 @@ namespace YoutubePlayer.CustomVideo
                         videoEntity.svEntity.SvStartDefaultVideo(index);
                         player.svPlayer.DestroyMenu(videoPanel);
                     }
-                    else if (optionID == youtubePanel && player.svPlayer.HasPermission("yp.main"))
+                    else if (optionID == youtubePanel && player.svPlayer.HasPermission("yp.play"))
                     {
                         List<LabelID> options = new List<LabelID>();
 
@@ -197,8 +101,7 @@ namespace YoutubePlayer.CustomVideo
                         string title = "YouTube Panel";
                         player.svPlayer.SendOptionMenu(title, videoEntity.ID, youtubePanel, options.ToArray(), new LabelID[] { new LabelID("Select", string.Empty) });
                     }
-
-                    break;
+                    return false;
                 case youtubePanel:
                     ShEntity videoEntityPanel = EntityCollections.FindByID(targetID);
                     if (optionID == ytplay && player.svPlayer.HasPermission("yp.play"))
@@ -223,8 +126,7 @@ namespace YoutubePlayer.CustomVideo
                         string title = "Trending Type";
                         player.svPlayer.SendOptionMenu(title, videoEntityTrending.ID, trendingPanel, options.ToArray(), new LabelID[] { new LabelID("Select", string.Empty) });
                     }
-                    break;
-
+                    return false;
                 case trendingPanel:
                     ShEntity trendingPanel2 = EntityCollections.FindByID(targetID);
                     if (optionID == Default)
@@ -247,75 +149,17 @@ namespace YoutubePlayer.CustomVideo
                         player.svPlayer.SendGameMessage("〔<color=#546eff>YouTubePlayer</color>〕 |  Fetching data from youtube....");
                         trendingPanel2.svEntity.SvStartCustomVideo("https://ytproxy.sploecyber.repl.co/api/trending?type=movies");
                     }
-                    break;
-
+                    return false;
                 default:
-                    if (targetID >= 0)
-                    {
-                        player.svPlayer.job.OnOptionMenuAction(targetID, menuID, optionID, actionID);
-                    }
-                    else
-                    {
-                        var target = EntityCollections.FindByID<ShPlayer>(-targetID);
-                        if (target) target.svPlayer.job.OnOptionMenuAction(player.ID, menuID, optionID, actionID);
-                    }
-                    break;
+                    return true;
             }
-        }
-
-        private IEnumerator CheckValidHackingGame(HackingContainer hackingContainer)
-        {
-            while (hackingContainer.HackingActive && hackingContainer.IsValid)
-            {
-                yield return null;
-            }
-
-            if (hackingContainer.HackingActive) hackingContainer.player.svPlayer.SvHackingStop(true);
         }
 
         [Target(GameSourceEvent.PlayerSubmitInput, ExecutionMode.Test)]
-        public void OnSubmitInput(ShPlayer player, int targetID, string menuID, string input)
+        public bool OnSubmitInput(ShPlayer player, int targetID, string menuID, string input)
         {
             switch (menuID)
             {
-                case enterPasscode:
-                    var a1 = EntityCollections.FindByID<ShApartment>(targetID);
-
-                    foreach (var a in a1.svApartment.clones.Values)
-                    {
-                        if (a.svPasscode != null && a.svPasscode == input)
-                        {
-                            player.svPlayer.SvEnterDoor(targetID, a.svOwner, true);
-                            return;
-                        }
-                    }
-                    player.svPlayer.SendGameMessage("Passcode: No Match");
-                    break;
-
-                case setPasscode:
-                    var a2 = EntityCollections.FindByID<ShApartment>(targetID);
-                    if (a2 && player.ownedApartments.TryGetValue(a2, out var ap2))
-                    {
-                        ap2.svPasscode = input;
-                        player.svPlayer.SendGameMessage("Apartment Passcode Set");
-                        return;
-                    }
-                    player.svPlayer.SendGameMessage("No Apartment Owned");
-                    break;
-
-                case customVideo:
-                    var videoEntity = EntityCollections.FindByID(targetID);
-
-                    if (VideoPermission(player, videoEntity, PermEnum.VideoCustom) && input.StartsWith("https://"))
-                    {
-                        videoEntity.svEntity.SvStartCustomVideo(input);
-                    }
-                    else
-                    {
-                        player.svPlayer.SendGameMessage("Must have permission ");
-                    }
-                    break;
-
                 case ytplay:
                     ShEntity videoEntity2 = EntityCollections.FindByID(targetID);
 
@@ -333,8 +177,7 @@ namespace YoutubePlayer.CustomVideo
                     {
                         player.svPlayer.SendGameMessage("〔<color=#546eff>YouTubePlayer</color>〕 |  Must have permission and start with 'https://www.youtube.com/'");
                     }
-                    break;
-
+                    return false;
                 case ytsearch:
                     ShEntity videoEntity3 = EntityCollections.FindByID(targetID);
                     if (player.svPlayer.HasPermission("yp.search"))
@@ -347,8 +190,7 @@ namespace YoutubePlayer.CustomVideo
                     {
                         player.svPlayer.SendGameMessage("〔<color=#546eff>YouTubePlayer</color>〕 |  Must have permission");
                     }
-                    break;
-
+                    return false;
                 case yttrending:
                     ShEntity videoEntity4 = EntityCollections.FindByID(targetID);
 
@@ -364,7 +206,9 @@ namespace YoutubePlayer.CustomVideo
                     {
                         player.svPlayer.SendGameMessage("〔<color=#546eff>YouTubePlayer</color>〕 |  Must have permission");
                     }
-                    break;
+                    return false;
+                default:
+                    return true;
             }
         }
     }
