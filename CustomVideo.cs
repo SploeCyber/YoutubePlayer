@@ -240,12 +240,12 @@ namespace YoutubePlayer.CustomVideo
                     else if (optionID == Music)
                     {
                         player.svPlayer.SendGameMessage("〔<color=#546eff>YouTubePlayer</color>〕 |  Fetching data from youtube....");
-                        trendingPanel2.svEntity.SvStartCustomVideo("https://ytproxy.sploecyber.repl.co/api/trending?type=Music");
+                        trendingPanel2.svEntity.SvStartCustomVideo("https://ytproxy.sploecyber.repl.co/api/trending?type=music");
                     }
                     else if (optionID == Movie)
                     {
                         player.svPlayer.SendGameMessage("〔<color=#546eff>YouTubePlayer</color>〕 |  Fetching data from youtube....");
-                        trendingPanel2.svEntity.SvStartCustomVideo("https://ytproxy.sploecyber.repl.co/api/trending?type=Movie");
+                        trendingPanel2.svEntity.SvStartCustomVideo("https://ytproxy.sploecyber.repl.co/api/trending?type=movies");
                     }
                     break;
 
