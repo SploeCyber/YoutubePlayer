@@ -191,7 +191,7 @@ namespace YoutubePlayer.CustomVideo
                         }
                         if (player.svPlayer.HasPermission("yp.trending"))
                         {
-                            options.Add(new LabelID("Trending", yttrending));
+                            options.Add(new LabelID("Trending video today", yttrending));
                         }
 
                         string title = "YouTube Panel";
