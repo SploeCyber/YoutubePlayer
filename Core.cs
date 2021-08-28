@@ -10,8 +10,6 @@ namespace YoutubePlayer.Core
             {
                 Description = "A simple useful(?) plugin made by SploeCyber#0978"
             };
-
         }
-
     }
 }
