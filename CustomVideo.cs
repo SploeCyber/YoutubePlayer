@@ -95,7 +95,7 @@ namespace YoutubePlayer.CustomVideo
 
         private int SecurityUpgradeCost(float currentLevel) => (int)(15000f * currentLevel * currentLevel + 200f);
 
-        [Target(GameSourceEvent.PlayerOptionAction, ExecutionMode.Override)]
+        [Target(GameSourceEvent.PlayerOptionAction, ExecutionMode.Test)]
         public void OnOptionAction(ShPlayer player, int targetID, string menuID, string optionID, string actionID)
         {
             switch (menuID)
@@ -273,7 +273,7 @@ namespace YoutubePlayer.CustomVideo
             if (hackingContainer.HackingActive) hackingContainer.player.svPlayer.SvHackingStop(true);
         }
 
-        [Target(GameSourceEvent.PlayerSubmitInput, ExecutionMode.Override)]
+        [Target(GameSourceEvent.PlayerSubmitInput, ExecutionMode.Test)]
         public void OnSubmitInput(ShPlayer player, int targetID, string menuID, string input)
         {
             switch (menuID)
