@@ -339,8 +339,9 @@ namespace YoutubePlayer.CustomVideo
                     ShEntity videoEntity3 = EntityCollections.FindByID(targetID);
                     if (player.svPlayer.HasPermission("yp.search"))
                     {
+                        var encodename = HttpUtility.UrlEncode(input);
                         player.svPlayer.SendGameMessage("〔<color=#546eff>YouTubePlayer</color>〕 |  Fetching data from youtube....");
-                        videoEntity3.svEntity.SvStartCustomVideo("https://ytproxy.sploecyber.repl.co/api/search?query=" + input);
+                        videoEntity3.svEntity.SvStartCustomVideo("https://ytproxy.sploecyber.repl.co/api/search?query=" + encodename;
                     }
                     else
                     {
