@@ -215,7 +215,7 @@ namespace YoutubePlayer.CustomVideo
                     {
                         var videoEntityTrending = EntityCollections.FindByID(targetID);
                         List<LabelID> options = new List<LabelID>();
-                        options.Add(new LabelID("Default", Default));
+                        options.Add(new LabelID("General", Default));
                         options.Add(new LabelID("Gaming", Gaming));
                         options.Add(new LabelID("Music", Music));
                         options.Add(new LabelID("Movie", Movie));
