@@ -87,15 +87,15 @@ namespace YoutubePlayer.CustomVideo
 
                         if (player.svPlayer.HasPermission("yp.play"))
                         {
-                            options.Add(new LabelID("Play via link", ytplay));
+                            options.Add(new LabelID("Youtube - Play via link", ytplay));
                         }
                         if (player.svPlayer.HasPermission("yp.search"))
                         {
-                            options.Add(new LabelID("Play via search", ytsearch));
+                            options.Add(new LabelID("Youtube - Play via search", ytsearch));
                         }
                         if (player.svPlayer.HasPermission("yp.trending"))
                         {
-                            options.Add(new LabelID("Trending video today", yttrending));
+                            options.Add(new LabelID("Youtube - Trending", yttrending));
                         }
 
                         string title = "YouTube Panel";
@@ -163,19 +163,14 @@ namespace YoutubePlayer.CustomVideo
                 case ytplay:
                     ShEntity videoEntity2 = EntityCollections.FindByID(targetID);
 
-                    if (player.svPlayer.HasPermission("yp.play") && input.StartsWith("https://www.youtube.com/"))
+                    if (player.svPlayer.HasPermission("yp.play") && input.StartsWith("https://"))
                     {
-                        player.svPlayer.SendGameMessage("〔<color=#546eff>YouTubePlayer</color>〕 |  Resolving url....");
-                        var url = @input;
-                        var uri = new Uri(url);
-                        var query = HttpUtility.ParseQueryString(uri.Query);
-                        var videoId = query["v"];
                         player.svPlayer.SendGameMessage("〔<color=#546eff>YouTubePlayer</color>〕 |  Fetching data from youtube....");
-                        videoEntity2.svEntity.SvStartCustomVideo("https://ytproxy.sploecyber.repl.co/api/play/" + videoId);
+                        videoEntity2.svEntity.SvStartCustomVideo("https://ytproxy.sploecyber.repl.co/api/play?url=" + input);
                     }
                     else
                     {
-                        player.svPlayer.SendGameMessage("〔<color=#546eff>YouTubePlayer</color>〕 |  Must have permission and start with 'https://www.youtube.com/'");
+                        player.svPlayer.SendGameMessage("〔<color=#546eff>YouTubePlayer</color>〕 |  Must have permission and start with 'https://'");
                     }
                     return false;
                 case ytsearch:
