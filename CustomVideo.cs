@@ -41,7 +41,7 @@ namespace YoutubePlayer.CustomVideo
             if (VideoPermission(player, videoEntity, PermEnum.VideoDefault))
             {
                 int index = 0;
-                foreach (VideoOption option in videoEntity.svEntity.videoOptions)
+                foreach (VideoOption option in player.manager.svManager.videoOptions)
                 {
                     options.Add(new LabelID(option.label, index.ToString()));
                     index++;
