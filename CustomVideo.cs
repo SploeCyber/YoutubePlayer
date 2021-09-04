@@ -34,7 +34,7 @@ namespace YoutubePlayer.CustomVideo
         public void OnVideoPanel(ShPlayer player, ShEntity videoEntity)
         {
             List<LabelID> options = new List<LabelID>();
-            if (player.svPlayer.HasPermission("yp.main"))
+            if (player.svPlayer.HasPermission("yp.play"))
             {
                 options.Add(new LabelID("&cYouTube", youtubePanel));
             }
@@ -60,7 +60,7 @@ namespace YoutubePlayer.CustomVideo
         }
 
         [Target(GameSourceEvent.PlayerOptionAction, ExecutionMode.Test)]
-        public bool OnOptionAction(ShPlayer player, int targetID, string menuID, string optionID, string actionID)
+        public bool OnOptionActionAsync(ShPlayer player, int targetID, string menuID, string optionID, string actionID)
         {
             switch (menuID)
             {
@@ -103,7 +103,6 @@ namespace YoutubePlayer.CustomVideo
                     }
                     return false;
                 case youtubePanel:
-                    ShEntity videoEntityPanel = EntityCollections.FindByID(targetID);
                     if (optionID == ytplay && player.svPlayer.HasPermission("yp.play"))
                     {
                         player.svPlayer.SendGameMessage("〔<color=#546eff>YouTubePlayer</color>〕 |  You have provide video link");
@@ -131,23 +130,27 @@ namespace YoutubePlayer.CustomVideo
                     ShEntity trendingPanel2 = EntityCollections.FindByID(targetID);
                     if (optionID == Default)
                     {
-                        player.svPlayer.SendGameMessage("〔<color=#546eff>YouTubePlayer</color>〕 |  Fetching data from youtube....");
+                        player.svPlayer.SendGameMessage("〔<color=#546eff>YouTubePlayer</color>〕 |  Please wait a moment");
                         trendingPanel2.svEntity.SvStartCustomVideo("https://ytproxy.sploecyber.repl.co/api/trending");
+                        player.svPlayer.DestroyMenu();
                     }
                     else if (optionID == Gaming)
                     {
-                        player.svPlayer.SendGameMessage("〔<color=#546eff>YouTubePlayer</color>〕 |  Fetching data from youtube....");
+                        player.svPlayer.SendGameMessage("〔<color=#546eff>YouTubePlayer</color>〕 |  Please wait a moment");
                         trendingPanel2.svEntity.SvStartCustomVideo("https://ytproxy.sploecyber.repl.co/api/trending?type=gaming");
+                        player.svPlayer.DestroyMenu();
                     }
                     else if (optionID == Music)
                     {
-                        player.svPlayer.SendGameMessage("〔<color=#546eff>YouTubePlayer</color>〕 |  Fetching data from youtube....");
+                        player.svPlayer.SendGameMessage("〔<color=#546eff>YouTubePlayer</color>〕 |  Please wait a moment");
                         trendingPanel2.svEntity.SvStartCustomVideo("https://ytproxy.sploecyber.repl.co/api/trending?type=music");
+                        player.svPlayer.DestroyMenu();
                     }
                     else if (optionID == Movie)
                     {
-                        player.svPlayer.SendGameMessage("〔<color=#546eff>YouTubePlayer</color>〕 |  Fetching data from youtube....");
+                        player.svPlayer.SendGameMessage("〔<color=#546eff>YouTubePlayer</color>〕 |  Please wait a moment");
                         trendingPanel2.svEntity.SvStartCustomVideo("https://ytproxy.sploecyber.repl.co/api/trending?type=movies");
+                        player.svPlayer.DestroyMenu();
                     }
                     return false;
                 default:
@@ -165,7 +168,7 @@ namespace YoutubePlayer.CustomVideo
 
                     if (player.svPlayer.HasPermission("yp.play") && input.StartsWith("https://"))
                     {
-                        player.svPlayer.SendGameMessage("〔<color=#546eff>YouTubePlayer</color>〕 |  Fetching data from youtube....");
+                        player.svPlayer.SendGameMessage("〔<color=#546eff>YouTubePlayer</color>〕 |  Please wait a moment");
                         videoEntity2.svEntity.SvStartCustomVideo("https://ytproxy.sploecyber.repl.co/api/play?url=" + input);
                     }
                     else
@@ -177,9 +180,9 @@ namespace YoutubePlayer.CustomVideo
                     ShEntity videoEntity3 = EntityCollections.FindByID(targetID);
                     if (player.svPlayer.HasPermission("yp.search"))
                     {
-                        var encodename = HttpUtility.UrlEncode(input);
-                        player.svPlayer.SendGameMessage("〔<color=#546eff>YouTubePlayer</color>〕 |  Fetching data from youtube....");
-                        videoEntity3.svEntity.SvStartCustomVideo("https://ytproxy.sploecyber.repl.co/api/search?query=" + encodename);
+                        var encoded = HttpUtility.UrlEncode(input);
+                        player.svPlayer.SendGameMessage("〔<color=#546eff>YouTubePlayer</color>〕 |  Please wait a moment");
+                        videoEntity3.svEntity.SvStartCustomVideo("https://ytproxy.sploecyber.repl.co/api/search?query=" + encoded);
                     }
                     else
                     {
