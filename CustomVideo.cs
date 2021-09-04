@@ -60,7 +60,7 @@ namespace YoutubePlayer.CustomVideo
         }
 
         [Target(GameSourceEvent.PlayerOptionAction, ExecutionMode.Test)]
-        public bool OnOptionActionAsync(ShPlayer player, int targetID, string menuID, string optionID, string actionID)
+        public bool OnOptionAction(ShPlayer player, int targetID, string menuID, string optionID, string actionID)
         {
             switch (menuID)
             {
