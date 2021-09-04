@@ -31,6 +31,8 @@ namespace YoutubePlayer.CustomVideo
 
         private bool VideoPermission(ShPlayer player, ShEntity videoPlayer, string permission, bool checkLimit = false)
         {
+            if (!videoPlayer) return false;
+
             if (checkLimit)
             {
                 const int videoLimit = 3;
@@ -49,7 +51,7 @@ namespace YoutubePlayer.CustomVideo
                 }
             }
 
-            return videoPlayer && player.InActionRange(videoPlayer) && (player.InOwnApartment || player.svPlayer.HasPermission(permission));
+            return player.InActionRange(videoPlayer) && (player.InOwnApartment || player.svPlayer.HasPermission(permission));
         }
 
         [Target(GameSourceEvent.PlayerVideoPanel, ExecutionMode.Override)]
