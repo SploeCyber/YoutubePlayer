@@ -25,20 +25,42 @@ namespace YoutubePlayer.CustomVideo
         private const string Music = "Music";
         private const string Gaming = "Gaming";
 
-        private bool VideoPermission(ShPlayer player, ShEntity videoPlayer, PermEnum permission)
+        private const string defaultVideoPerm = "bp.videoDefault";
+        private const string stopVideoPerm = "bp.videoStop";
+        private const string customVideoPerm = "bp.videoCustom";
+
+        private bool VideoPermission(ShPlayer player, ShEntity videoPlayer, string permission, bool checkLimit = false)
         {
-            return videoPlayer && player.InActionRange(videoPlayer) && (player.InOwnApartment || player.svPlayer.HasPermissionBP(permission));
+            if (checkLimit)
+            {
+                const int videoLimit = 3;
+
+                int videoCount = 0;
+                foreach (var e in videoPlayer.svEntity.sector.controlled)
+                {
+                    if (e != videoPlayer && !string.IsNullOrWhiteSpace(e.svEntity.videoURL))
+                        videoCount++;
+                }
+
+                if (videoCount >= videoLimit)
+                {
+                    player.svPlayer.SendGameMessage($"Video limit of {videoLimit} reached");
+                    return false;
+                }
+            }
+
+            return videoPlayer && player.InActionRange(videoPlayer) && (player.InOwnApartment || player.svPlayer.HasPermission(permission));
         }
 
         [Target(GameSourceEvent.PlayerVideoPanel, ExecutionMode.Override)]
         public void OnVideoPanel(ShPlayer player, ShEntity videoEntity)
         {
             List<LabelID> options = new List<LabelID>();
-            if (player.svPlayer.HasPermission("yp.play"))
+            if (VideoPermission(player, videoEntity, "yp.play"))
             {
                 options.Add(new LabelID("&cYouTube", youtubePanel));
             }
-            if (VideoPermission(player, videoEntity, PermEnum.VideoDefault))
+            if (VideoPermission(player, videoEntity, defaultVideoPerm))
             {
                 int index = 0;
                 foreach (VideoOption option in player.manager.svManager.videoOptions)
@@ -47,11 +69,11 @@ namespace YoutubePlayer.CustomVideo
                     index++;
                 }
             }
-            if (VideoPermission(player, videoEntity, PermEnum.VideoCustom))
+            if (VideoPermission(player, videoEntity, customVideoPerm))
             {
                 options.Add(new LabelID("&eCustom Video URL", customVideo));
             }
-            if (VideoPermission(player, videoEntity, PermEnum.VideoStop))
+            if (VideoPermission(player, videoEntity, stopVideoPerm))
             {
                 options.Add(new LabelID("&4Stop Video", stopVideo));
             }
@@ -62,38 +84,38 @@ namespace YoutubePlayer.CustomVideo
         [Target(GameSourceEvent.PlayerOptionAction, ExecutionMode.Test)]
         public bool OnOptionAction(ShPlayer player, int targetID, string menuID, string optionID, string actionID)
         {
+            ShEntity videoEntity = EntityCollections.FindByID(targetID);
             switch (menuID)
             {
                 case videoPanel:
-                    ShEntity videoEntity = EntityCollections.FindByID(targetID);
-                    if (optionID == customVideo && VideoPermission(player, videoEntity, PermEnum.VideoCustom))
+                    if (optionID == customVideo && VideoPermission(player, videoEntity, customVideoPerm))
                     {
                         player.svPlayer.SendGameMessage("Only direct video links supported - Can upload to Imgur or Discord and link that");
                         player.svPlayer.SendInputMenu("Direct MP4/WEBM URL", targetID, customVideo, InputField.ContentType.Standard, 128);
                     }
-                    else if (optionID == stopVideo && VideoPermission(player, videoEntity, PermEnum.VideoStop))
+                    else if (optionID == stopVideo && VideoPermission(player, videoEntity, stopVideoPerm))
                     {
                         videoEntity.svEntity.SvStopVideo();
                         player.svPlayer.DestroyMenu(videoPanel);
                     }
-                    else if (VideoPermission(player, videoEntity, PermEnum.VideoDefault) && int.TryParse(optionID, out int index))
+                    else if (VideoPermission(player, videoEntity, defaultVideoPerm, true) && int.TryParse(optionID, out int index))
                     {
                         videoEntity.svEntity.SvStartDefaultVideo(index);
                         player.svPlayer.DestroyMenu(videoPanel);
                     }
-                    else if (optionID == youtubePanel && player.svPlayer.HasPermission("yp.play"))
+                    else if (optionID == youtubePanel && VideoPermission(player, videoEntity, "yp.play"))
                     {
                         List<LabelID> options = new List<LabelID>();
 
-                        if (player.svPlayer.HasPermission("yp.play"))
+                        if (VideoPermission(player, videoEntity, "yp.play"))
                         {
                             options.Add(new LabelID("Youtube - Play via link", ytplay));
                         }
-                        if (player.svPlayer.HasPermission("yp.search"))
+                        if (VideoPermission(player, videoEntity, "yp.search"))
                         {
                             options.Add(new LabelID("Youtube - Play via search", ytsearch));
                         }
-                        if (player.svPlayer.HasPermission("yp.trending"))
+                        if (VideoPermission(player, videoEntity, "yp.trending"))
                         {
                             options.Add(new LabelID("Youtube - Trending", yttrending));
                         }
@@ -103,19 +125,18 @@ namespace YoutubePlayer.CustomVideo
                     }
                     return false;
                 case youtubePanel:
-                    if (optionID == ytplay && player.svPlayer.HasPermission("yp.play"))
+                    if (optionID == ytplay && VideoPermission(player, videoEntity, "yp.play"))
                     {
                         player.svPlayer.SendGameMessage("〔<color=#546eff>YouTubePlayer</color>〕 |  You have provide video link");
                         player.svPlayer.SendInputMenu("Link", targetID, ytplay, InputField.ContentType.Standard, 128);
                     }
-                    else if (optionID == ytsearch && player.svPlayer.HasPermission("yp.search"))
+                    else if (optionID == ytsearch && VideoPermission(player, videoEntity, "yp.search"))
                     {
                         player.svPlayer.SendGameMessage("〔<color=#546eff>YouTubePlayer</color>〕 |  You have provide video name");
                         player.svPlayer.SendInputMenu("Name", targetID, ytsearch, InputField.ContentType.Standard, 128);
                     }
-                    else if (optionID == yttrending && player.svPlayer.HasPermission("yp.trending"))
+                    else if (optionID == yttrending && VideoPermission(player, videoEntity, "yp.trending"))
                     {
-                        var videoEntityTrending = EntityCollections.FindByID(targetID);
                         List<LabelID> options = new List<LabelID>();
                         options.Add(new LabelID("General", Default));
                         options.Add(new LabelID("Gaming", Gaming));
@@ -123,33 +144,36 @@ namespace YoutubePlayer.CustomVideo
                         options.Add(new LabelID("Movie", Movie));
 
                         string title = "Trending Type";
-                        player.svPlayer.SendOptionMenu(title, videoEntityTrending.ID, trendingPanel, options.ToArray(), new LabelID[] { new LabelID("Select", string.Empty) });
+                        player.svPlayer.SendOptionMenu(title, videoEntity.ID, trendingPanel, options.ToArray(), new LabelID[] { new LabelID("Select", string.Empty) });
                     }
                     return false;
                 case trendingPanel:
-                    ShEntity trendingPanel2 = EntityCollections.FindByID(targetID);
+
+                    if (!VideoPermission(player, videoEntity, "yp.trending", true))
+                        return false;
+
                     if (optionID == Default)
                     {
                         player.svPlayer.SendGameMessage("〔<color=#546eff>YouTubePlayer</color>〕 |  Please wait a moment");
-                        trendingPanel2.svEntity.SvStartCustomVideo("https://ytproxy.sploecyber.repl.co/api/trending");
+                        videoEntity.svEntity.SvStartCustomVideo("https://ytproxy.sploecyber.repl.co/api/trending");
                         player.svPlayer.DestroyMenu();
                     }
                     else if (optionID == Gaming)
                     {
                         player.svPlayer.SendGameMessage("〔<color=#546eff>YouTubePlayer</color>〕 |  Please wait a moment");
-                        trendingPanel2.svEntity.SvStartCustomVideo("https://ytproxy.sploecyber.repl.co/api/trending?type=gaming");
+                        videoEntity.svEntity.SvStartCustomVideo("https://ytproxy.sploecyber.repl.co/api/trending?type=gaming");
                         player.svPlayer.DestroyMenu();
                     }
                     else if (optionID == Music)
                     {
                         player.svPlayer.SendGameMessage("〔<color=#546eff>YouTubePlayer</color>〕 |  Please wait a moment");
-                        trendingPanel2.svEntity.SvStartCustomVideo("https://ytproxy.sploecyber.repl.co/api/trending?type=music");
+                        videoEntity.svEntity.SvStartCustomVideo("https://ytproxy.sploecyber.repl.co/api/trending?type=music");
                         player.svPlayer.DestroyMenu();
                     }
                     else if (optionID == Movie)
                     {
                         player.svPlayer.SendGameMessage("〔<color=#546eff>YouTubePlayer</color>〕 |  Please wait a moment");
-                        trendingPanel2.svEntity.SvStartCustomVideo("https://ytproxy.sploecyber.repl.co/api/trending?type=movies");
+                        videoEntity.svEntity.SvStartCustomVideo("https://ytproxy.sploecyber.repl.co/api/trending?type=movies");
                         player.svPlayer.DestroyMenu();
                     }
                     return false;
@@ -161,15 +185,15 @@ namespace YoutubePlayer.CustomVideo
         [Target(GameSourceEvent.PlayerSubmitInput, ExecutionMode.Test)]
         public bool OnSubmitInput(ShPlayer player, int targetID, string menuID, string input)
         {
+            ShEntity videoEntity = EntityCollections.FindByID(targetID);
+
             switch (menuID)
             {
                 case ytplay:
-                    ShEntity videoEntity2 = EntityCollections.FindByID(targetID);
-
-                    if (player.svPlayer.HasPermission("yp.play") && input.StartsWith("https://"))
+                    if (VideoPermission(player, videoEntity, "yp.play") && input.StartsWith("https://"))
                     {
                         player.svPlayer.SendGameMessage("〔<color=#546eff>YouTubePlayer</color>〕 |  Please wait a moment");
-                        videoEntity2.svEntity.SvStartCustomVideo("https://ytproxy.sploecyber.repl.co/api/play?url=" + input);
+                        videoEntity.svEntity.SvStartCustomVideo("https://ytproxy.sploecyber.repl.co/api/play?url=" + input);
                     }
                     else
                     {
@@ -177,12 +201,11 @@ namespace YoutubePlayer.CustomVideo
                     }
                     return false;
                 case ytsearch:
-                    ShEntity videoEntity3 = EntityCollections.FindByID(targetID);
-                    if (player.svPlayer.HasPermission("yp.search"))
+                    if (VideoPermission(player, videoEntity, "yp.search"))
                     {
                         var encoded = HttpUtility.UrlEncode(input);
                         player.svPlayer.SendGameMessage("〔<color=#546eff>YouTubePlayer</color>〕 |  Please wait a moment");
-                        videoEntity3.svEntity.SvStartCustomVideo("https://ytproxy.sploecyber.repl.co/api/search?query=" + encoded);
+                        videoEntity.svEntity.SvStartCustomVideo("https://ytproxy.sploecyber.repl.co/api/search?query=" + encoded);
                     }
                     else
                     {
@@ -190,15 +213,13 @@ namespace YoutubePlayer.CustomVideo
                     }
                     return false;
                 case yttrending:
-                    ShEntity videoEntity4 = EntityCollections.FindByID(targetID);
-
-                    if (player.svPlayer.HasPermission("yp.trending"))
+                    if (VideoPermission(player, videoEntity, "yp.trending"))
                     {
                         var url = @input;
                         var uri = new Uri(url);
                         var query = HttpUtility.ParseQueryString(uri.Query);
                         var videoId = query["v"];
-                        videoEntity4.svEntity.SvStartCustomVideo("https://ytproxy.sploecyber.repl.co/api/play/" + videoId);
+                        videoEntity.svEntity.SvStartCustomVideo("https://ytproxy.sploecyber.repl.co/api/play/" + videoId);
                     }
                     else
                     {
