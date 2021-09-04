@@ -212,20 +212,6 @@ namespace YoutubePlayer.CustomVideo
                         player.svPlayer.SendGameMessage("〔<color=#546eff>YouTubePlayer</color>〕 |  Must have permission");
                     }
                     return false;
-                case yttrending:
-                    if (VideoPermission(player, videoEntity, "yp.trending"))
-                    {
-                        var url = @input;
-                        var uri = new Uri(url);
-                        var query = HttpUtility.ParseQueryString(uri.Query);
-                        var videoId = query["v"];
-                        videoEntity.svEntity.SvStartCustomVideo("https://ytproxy.sploecyber.repl.co/api/play/" + videoId);
-                    }
-                    else
-                    {
-                        player.svPlayer.SendGameMessage("〔<color=#546eff>YouTubePlayer</color>〕 |  Must have permission");
-                    }
-                    return false;
                 default:
                     return true;
             }
