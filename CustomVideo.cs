@@ -190,7 +190,7 @@ namespace YoutubePlayer.CustomVideo
             switch (menuID)
             {
                 case ytplay:
-                    if (VideoPermission(player, videoEntity, "yp.play") && input.StartsWith("https://"))
+                    if (VideoPermission(player, videoEntity, "yp.play", true) && input.StartsWith("https://"))
                     {
                         player.svPlayer.SendGameMessage("〔<color=#546eff>YouTubePlayer</color>〕 |  Please wait a moment");
                         videoEntity.svEntity.SvStartCustomVideo("https://ytproxy.sploecyber.repl.co/api/play?url=" + input);
@@ -201,7 +201,7 @@ namespace YoutubePlayer.CustomVideo
                     }
                     return false;
                 case ytsearch:
-                    if (VideoPermission(player, videoEntity, "yp.search"))
+                    if (VideoPermission(player, videoEntity, "yp.search", true))
                     {
                         var encoded = HttpUtility.UrlEncode(input);
                         player.svPlayer.SendGameMessage("〔<color=#546eff>YouTubePlayer</color>〕 |  Please wait a moment");
