@@ -1,6 +1,6 @@
 ﻿using BrokeProtocol.API;
 
-namespace YoutubePlayer.Core
+namespace YoutubePlayer
 {
     public class Core : Plugin
     {
@@ -8,8 +8,10 @@ namespace YoutubePlayer.Core
         {
             Info = new PluginInfo("YouTubePlayer", "yp")
             {
-                Description = "A simple useful(?) plugin made by SploeCyber#0978"
+                Description = "Play videos from YouTube",
+                Website = "https://github.com/SploeCyber/YoutubePlayer"
             };
+
         }
     }
 }
